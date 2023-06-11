@@ -8,7 +8,7 @@ This is a chat application developed with express.js,socket.io in backend and vu
 Clone the project
 
 ```bash
-  git clone https://link-to-project
+  git clone https://github.com/mahdi-turrkk/chat-app.git
 ```
 
 Go to the project directory
