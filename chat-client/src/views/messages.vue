@@ -40,6 +40,7 @@
                          :message-time="message.time"
                          :class="{'ml-auto' : message.fromUser != selectedUser.username}"
                          :color="messageColor(message.fromUser)" :message="message.messageText"/>
+                <div id="last"></div>
               </v-card>
               <v-text-field style="background-color: white;border-radius: 0;border-radius: 0 0 10px 0" solo
                             class="elevation-0"
@@ -47,6 +48,7 @@
                             append-icon="mdi-send" @click:append="sendMessage" v-model="text" color="background"
                             :disabled="isOffline"></v-text-field>
             </v-col>
+            <a href="#last" ref="last" style="display: none"></a>
           </v-row>
         </v-card>
       </v-col>
@@ -146,6 +148,7 @@ export default {
         isSeen : 0
       });
       this.text = undefined
+      this.$refs.last.click()
     },
     changeUser(user) {
       this.selectedUser.username = user.username
@@ -159,6 +162,7 @@ export default {
         toUser: this.username,
         fromUserID : user.userID
       });
+      this.$refs.last.click()
     },
     messageColor(username) {
       if (username != this.selectedUser.username)
@@ -224,6 +228,7 @@ export default {
         });
         this.users[index].messages.push(content)
         this.users[index].haveNewMessage = true
+        this.$refs.last.click()
         if(this.selectedUser.username == from){
           this.users[index].haveNewMessage = false
           socket.emit('seen message' , {
