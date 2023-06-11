@@ -25,14 +25,14 @@
                 </v-list-item>
               </v-card>
             </v-col>
-            <v-col cols="9" lg="10" class="pl-0 pt-0" v-if="selectedUser.username != undefined">
-              <div class="mx-3 py-5">
+            <v-col cols="9" lg="10" class="pl-0 py-0" style="height: 90vh" v-if="selectedUser.username != undefined">
+              <div class="mx-3 pt-4" style="height: 80px">
                 <v-icon :color="isOnline(selectedUser.userID)" size="10">mdi-circle</v-icon>
                 <div class="ml-1 d-inline-block">{{ selectedUser.name }}</div>
                 <div class="ml-1 text-body-2 grey--text">@{{ selectedUser.username }}</div>
               </div>
               <v-divider/>
-              <v-card height="76vh" style="background-color: transparent;overflow: auto"
+              <v-card style="background-color: transparent;overflow: auto;height: calc(90vh - 129px)"
                       class="mx-0 elevation-0 pt-6 scroller-style">
                 <message v-for="message in messages" class="mb-5"
                          :is-seen="message.isSeen == 1 && message.fromUser == username"
@@ -42,11 +42,11 @@
                          :color="messageColor(message.fromUser)" :message="message.messageText"/>
                 <div id="last"></div>
               </v-card>
-              <v-text-field style="background-color: white;border-radius: 0;border-radius: 0 0 10px 0" solo
+              <v-text-field style="background-color: white;border-radius: 0;border-radius: 0 0 10px 0;height: 40px" solo
                             class="elevation-0"
                             placeholder="your message..."
                             append-icon="mdi-send" @click:append="sendMessage" v-model="text" color="background"
-                            :disabled="isOffline"></v-text-field>
+                            :disabled="isOffline" hide-details></v-text-field>
             </v-col>
             <a href="#last" ref="last" style="display: none"></a>
           </v-row>

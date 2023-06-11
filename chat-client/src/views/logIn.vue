@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid class="d-flex justify-center align-center" style="height: 100vh">
-    <v-card width="500px" color="grey" class="lighten-3 px-6 py-9 text-center" style="border-radius: 20px">
+  <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;background-color: lightgrey" >
+    <v-card width="500px" color="grey" class="lighten-3 px-6 py-9 text-center elevation-16" style="border-radius: 20px">
       <v-window v-model="onboarding">
         <v-window-item>
           <div class="text-center text-h4 secondary--text">Sign In</div>
