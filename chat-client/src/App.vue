@@ -1,18 +1,6 @@
 <template>
-  <v-app>
-    <v-main>
-      <router-view/>
-    </v-main>
-  </v-app>
+  <div class="text-justify">
+    <router-view/>
+  </div>
 </template>
 
-<script>
-
-export default {
-  name: 'App',
-
-  data: () => ({
-    //
-  }),
-};
-</script>

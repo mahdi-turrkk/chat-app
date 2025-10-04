@@ -1,6 +1,6 @@
 function getAllUsers(db) {
     return new Promise((resolve, reject) => {
-        db.all('SELECT name ,username FROM users', (err, rows) => {
+        db.all('SELECT id ,name ,username FROM users', (err, rows) => {
             if (err) {
                 reject(err);
             } else {
@@ -11,9 +11,9 @@ function getAllUsers(db) {
     })
 }
 
-function getUser(db,username) {
+function getUser(db,id) {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT name FROM users WHERE username="${username}"`, (err, rows) => {
+        db.all(`SELECT name FROM users WHERE id="${id}"`, (err, rows) => {
             if (err) {
                 reject(err);
             } else {

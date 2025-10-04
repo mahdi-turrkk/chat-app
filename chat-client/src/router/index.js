@@ -1,27 +1,36 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import logIn from '../views/logIn.vue'
-import messages from '../views/messages.vue'
-
-Vue.use(VueRouter)
+import {createRouter, createWebHistory} from 'vue-router'
+import LogIn from "../views/logIn.vue";
+import MessagingPage from "../views/messages.vue";
 
 const routes = [
-  {
-    path: '/',
-    name: 'login',
-    component: logIn
-  },
-  {
-    path: '/messaging',
-    name: 'messaging',
-    component: messages
-  },
+    // {
+    //     path: '/:pathMatch(.*)*',
+    //     name: 'NotFound',
+    //     component: NotFound
+    // },
+    {
+        path: '/',
+        component: LogIn,
+
+    },
+    {
+        path: '/messaging',
+        component: MessagingPage,
+
+    },
 ]
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes
+const router = createRouter({
+    // 4. Provide the history implementation to use. We are using the hash history for simplicity here.
+    history: createWebHistory(),
+    routes, // short for `routes: routes`
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        } else {
+            return {top: 0}
+        }
+    }
 })
 
 export default router

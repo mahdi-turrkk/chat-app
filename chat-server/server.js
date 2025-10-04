@@ -1,15 +1,23 @@
-const express = require('express')
-const cors = require('cors')
+import cors from 'cors';
+import express from 'express'
 const app = express()
-const sqlite3 = require('sqlite3').verbose()
-const httpServer = require("http").createServer(app);
-const queries = require('./helpers/queries')
-const io = require("socket.io")(httpServer, {
+import sqlite3 from "sqlite3";
+const sqlite = sqlite3.verbose()
+import {createServer} from 'http';
+const httpServer = createServer(app)
+import jwt from "jsonwebtoken";
+import {Server} from "socket.io";
+import {getAllUsers, getMessages, saveMessage, getUser, seenMessage} from "./helpers/queries.js";
+
+const SECRET_KEY = 'thisIsATestChatApp'
+const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:8080",
-    },
+        origin: '*', // Replace with your frontend's URL
+        methods: ['GET', 'POST'], // Allow methods used by Socket.IO
+        credentials: true // Optional, if you need to send cookies or auth headers
+    }
 });
-const db = new sqlite3.Database('chatApp.db', (err) => {
+const db = new sqlite.Database('chatApp.db', (err) => {
     if (err) {
         console.error('Database connection error:', err);
     } else {
@@ -32,10 +40,21 @@ app.post('/api/login', (req, res) => {
             if (row.length == 0) {
                 res.status(401).json({message: 'Invalid credentials'})
             } else {
-                res.status(200).json({message: 'Authentication successful'})
+                const token = jwt.sign({ username , id:row[0].id }, SECRET_KEY, { expiresIn: "24h" });
+                res.status(200).json({message: 'Authentication successful', token: token})
             }
         }
     });
+});
+
+app.get('/api/me', (req, res) => {
+    const { authorization } = req.headers;
+    try {
+        const decoded = jwt.verify(authorization, SECRET_KEY);
+        res.status(200).json({message: 'Authorization successful', username: decoded.username , id: decoded.id})
+    } catch (err) {
+        res.status(401).json({message: 'Invalid token'})
+    }
 });
 
 app.post('/api/register', (req, res) => {
@@ -66,43 +85,49 @@ app.post('/api/register', (req, res) => {
 });
 
 io.use((socket, next) => {
-    const username = socket.handshake.auth.username;
-    if (!username) {
-        return next(new Error("invalid username"));
+    const token = socket.handshake.auth.token; // client must send token here
+    if (!token) return next(new Error("Authentication error: Invalid token"));
+
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        socket.userId = decoded.id; // attach user data to socket
+        next();
+    } catch (err) {
+        next(new Error("Authentication error: Invalid token"));
     }
-    socket.username = username;
-    next();
 });
 
 io.on("connection", (socket) => {
     // fetch existing users
     let users = []
-    queries.getAllUsers(db).then((result) => {
+    getAllUsers(db).then((result) => {
         users = result
-        const usernames = []
+        const userIds = []
         let allMessages = []
-        queries.getMessages(db, socket.username).then((messages) => {
+        getMessages(db, socket.userId).then((messages) => {
             allMessages = messages
             for (let i = 0; i < users.length; i++) {
                 users[i] = {
+                    id: users[i].id,
                     username: users[i].username,
                     name: users[i].name,
                     userID: undefined,
-                    messages: allMessages.filter(message => (message.toUser == users[i].username || message.fromUser == users[i].username))
+                    messages: allMessages.filter(message => (message.toUser == users[i].id || message.fromUser == users[i].id))
                 }
-                usernames.push(users[i].username)
+                userIds.push(users[i].id)
             }
             for (let [id, socket] of io.of("/").sockets) {
-                const location = usernames.indexOf(socket.username)
+                const location = userIds.indexOf(socket.userId)
                 if (location != -1)
                     users[location].userID = id
             }
             socket.emit("users", users);
 
-            queries.getUser(db, socket.username).then((user) => {
+            getUser(db, socket.userId).then((user) => {
                 // notify existing users
                 socket.broadcast.emit("user connected", {
-                    userID: socket.id,
+                    socketID: socket.id,
+                    id: socket.userId,
                     username: socket.username,
                     name: user[0].name
                 });
@@ -110,21 +135,20 @@ io.on("connection", (socket) => {
         })
     });
 
-
     // forward the private message to the right recipient
     socket.on("private message", ({content, to}) => {
-        queries.saveMessage(db, content, socket.username, to.username).then((result) => {
+        saveMessage(db, content, socket.userId, to.id).then((result) => {
             if (to.userID != undefined) {
                 socket.to(to.userID).emit("private message", {
                     content: result,
-                    from: socket.username,
+                    from: socket.userId,
                 });
             }
         })
     });
 
     socket.on("seen message", ({fromUser, toUser, fromUserID}) => {
-        queries.seenMessage(db, fromUser, toUser).then(() => {
+        seenMessage(db, fromUser, toUser).then(() => {
             if (fromUserID != undefined) {
                 socket.to(fromUserID).emit('seen message', {
                     user: toUser
@@ -140,6 +164,6 @@ io.on("connection", (socket) => {
 });
 
 
-httpServer.listen(PORT, () =>
-    console.log(`server listening at http://localhost:${PORT}`)
+httpServer.listen(PORT,"0.0.0.0", () =>
+    console.log(`server listening at http://10.145.130.214:${PORT}`)
 );

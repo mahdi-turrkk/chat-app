@@ -1,14 +1,9 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
+import router from "./router/index";
 import App from './App.vue'
-import router from './router'
-import store from './store'
-import vuetify from './plugins/vuetify'
+import 'primeicons/primeicons.css';
+import './style.css'
 
-Vue.config.productionTip = false
 
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: function (h) { return h(App) }
-}).$mount('#app')
+
+createApp(App).use(router).mount('#app')
