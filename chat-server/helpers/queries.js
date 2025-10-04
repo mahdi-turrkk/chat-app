@@ -1,6 +1,6 @@
 function getAllUsers(db) {
     return new Promise((resolve, reject) => {
-        db.all('SELECT id ,name ,username FROM users', (err, rows) => {
+        db.all('SELECT id ,name ,username, profileImage FROM users', (err, rows) => {
             if (err) {
                 reject(err);
             } else {

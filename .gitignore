@@ -132,3 +132,7 @@ dist
 .idea
 
 chatApp.db
+
+chat-server/uploads/profileImages/*.png
+chat-server/uploads/profileImages/*.jpeg
+chat-server/uploads/profileImages/*.jpg

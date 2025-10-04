@@ -11,9 +11,12 @@
         <div v-for="user in users" :key="user.userID" class="flex items-center gap-2 py-4 px-2 shadow hover:bg-gray-100"
              :class="user.username === selectedUser.username ? 'bg-gray-50' : ''"
              @click="changeUser(user)">
-          <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg"
+          <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg "
                :class="`bg-${colors[(user.name.charCodeAt(0) + user.name.charCodeAt(1)) % 7]}`">
-            {{ user.name.slice(0, 2) }}
+            <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
+              <img :src="`http://10.145.130.214:4000/api/files/${user.profileImage.split('/')[2]}`" v-if="user.profileImage" :alt="user.name"/>
+            </div>
+            {{ user.profileImage ? '' : user.name.slice(0, 2) }}
             <i v-if="user.userID" class="pi pi-circle-fill text-sm absolute bottom-0 right-0"
                :class="user.userID ? 'text-green-500' : ''"/>
           </div>
@@ -30,7 +33,10 @@
           </div>
           <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-sm"
                :class="`bg-${colors[(selectedUser.name.charCodeAt(0) + selectedUser.name.charCodeAt(1)) % 7]}`">
-            {{ selectedUser.name.slice(0, 2) }}
+            <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
+              <img :src="`http://10.145.130.214:4000/api/files/${selectedUser.profileImage.split('/')[2]}`" v-if="selectedUser.profileImage" :alt="selectedUser.name"/>
+            </div>
+            {{selectedUser.profileImage ? '' : selectedUser.name.slice(0, 2) }}
           </div>
           <div class="text-blue-400 text-lg font-bold">
             {{ selectedUser.name }}
@@ -185,10 +191,7 @@ const sendMessage = () => {
 
 
 const changeUser = (user) => {
-  selectedUser.value.username = user.username
-  selectedUser.value.id = user.id
-  selectedUser.value.name = user.name
-  selectedUser.value.userID = user.userID
+  Object.assign(selectedUser.value , user)
   user.haveNewMessage = false
   messages.value = user.messages
   nextTick(() => {

@@ -34,13 +34,7 @@ export function initSocket(io) {
             getMessages(db, socket.userId).then((messages) => {
                 allMessages = messages
                 for (let i = 0; i < users.length; i++) {
-                    users[i] = {
-                        id: users[i].id,
-                        username: users[i].username,
-                        name: users[i].name,
-                        userID: undefined,
-                        messages: allMessages.filter(message => (message.toUser == users[i].id || message.fromUser == users[i].id))
-                    }
+                    users[i].messages = allMessages.filter(message => (message.toUser == users[i].id || message.fromUser == users[i].id))
                     userIds.push(users[i].id)
                 }
                 for (let [id, socket] of io.of("/").sockets) {

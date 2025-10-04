@@ -41,6 +41,12 @@
               <i class="pi absolute right-3 top-9 text-lg text-blue-400 cursor-pointer"
                  :class="showPass ? 'pi-eye-slash' : 'pi-eye'" @click="showPass = !showPass"/>
             </div>
+            <div class="relative cursor-pointer">
+              <input class="rounded-xl h-10 px-4 shadow-inner bg-gray-100 w-full mt-6 focus:outline-blue-400"
+                     :value="profileImage?.name" placeholder="Profile Image" disabled>
+              <div class="absolute top-0 right-0 left-0 bottom-0" @click="fileInput.click()"></div>
+            </div>
+            <input class="hidden" type="file" accept="image/png , image/jpeg, image'jpg" ref="fileInput" @change="(e) => {profileImage = e.target.files[0]}">
             <button
                 class="h-10 flex justify-center items-center w-full bg-blue-400 hover:bg-blue-300 focus:bg-blue-500 disabled:bg-blue-100 cursor-pointer rounded-xl mt-6 text-white"
                 @click="signUp">
@@ -68,9 +74,10 @@ const name = ref('')
 const username = ref('')
 const password = ref('')
 const onboarding = ref(0)
+const fileInput = ref(null)
+const profileImage = ref(null)
 
 const signIn = () => {
-  console.log(import.meta.env.VITE_BACKEND_URL)
   axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login`, {
     username: username.value,
     password: password.value,
@@ -86,11 +93,13 @@ const signIn = () => {
 }
 
 const signUp = () => {
-  axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
-    name: name.value,
-    username: username.value,
-    password: password.value,
-  }).then(response => {
+  let reqForm = new FormData()
+  reqForm.append("name", name.value)
+  reqForm.append("username", username.value)
+  reqForm.append("password", password.value)
+  if (profileImage.value)
+    reqForm.append("profileImage", profileImage.value, profileImage.value.name)
+  axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, reqForm).then(response => {
     username.value = undefined
     password.value = undefined
     name.value = undefined
