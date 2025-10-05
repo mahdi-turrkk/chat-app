@@ -68,6 +68,7 @@ const handleEditUser = () => {
       Authorization: localStorage.getItem('token')
     }
   }).then(res => {
+    localStorage.setItem('token', res.data.token)
     emit("userEdited" , res.data.name , res.data.profileImage)
   })
 }

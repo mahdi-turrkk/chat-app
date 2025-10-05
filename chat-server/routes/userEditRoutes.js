@@ -56,9 +56,14 @@ router.put("/users/editProfile", upload.single('profileImage'), async (req, res)
         const profileImagePath = req.file ? req.file.path : decoded.profileImage;
 
         // update database
-        db.run("UPDATE users SET profileImage = ? AND name = ? WHERE id = ?", [profileImagePath, name, userId], function (err) {
+        db.run("UPDATE users SET profileImage = ? , name = ? WHERE id = ?", [profileImagePath, name, userId], function (err) {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: "User updated successfully", profileImage: profileImagePath , name: name });
+            const token = jwt.sign(
+                { username: decoded.username, id: userId, profileImage: profileImagePath , name },
+                SECRET_KEY,
+                { expiresIn: "24h" }
+            );
+            res.json({ message: "User updated successfully", profileImage: profileImagePath , name: name, token });
         });
 
     } catch (error) {
