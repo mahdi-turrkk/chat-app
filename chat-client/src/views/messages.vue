@@ -2,10 +2,12 @@
   <div class="h-[100dvh] w-[100dvw] bg-gray-300 flex">
     <div class="fixed md:relative md:flex w-full z-20 md:w-1/3 lg:w-3/12 bg-gray-200 h-full max-h-[100dvh] flex-col"
          :class="showUserMenu ? '' : 'hidden'">
-      <div class="px-6 py-5 bg-white shadow-xl">
+      <div class="px-6 py-5 bg-white shadow-xl flex justify-between items-center">
         <h1 class="text-blue-400 text-xl font-bold">
           Chat App
         </h1>
+        <i class="pi pi-cog cursor-pointer hover:scale-125 transition-all duration-300"
+           @click="showEditProfileImage = true"/>
       </div>
       <div class="flex-1 overflow-y-auto usersContainer">
         <div v-for="user in users" :key="user.userID" class="flex items-center gap-2 py-4 px-2 shadow hover:bg-gray-100"
@@ -13,8 +15,10 @@
              @click="changeUser(user)">
           <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg "
                :class="`bg-${colors[(user.name.charCodeAt(0) + user.name.charCodeAt(1)) % 7]}`">
-            <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
-              <img :src="`http://10.145.130.214:4000/api/files/${user.profileImage.split('/')[2]}`" v-if="user.profileImage" :alt="user.name"/>
+            <div
+                class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
+              <img :src="`${backendUrl}/api/files/${user.profileImage.split('/')[2]}`"
+                   v-if="user.profileImage" :alt="user.name"/>
             </div>
             {{ user.profileImage ? '' : user.name.slice(0, 2) }}
             <i v-if="user.userID" class="pi pi-circle-fill text-sm absolute bottom-0 right-0"
@@ -33,16 +37,22 @@
           </div>
           <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-sm"
                :class="`bg-${colors[(selectedUser.name.charCodeAt(0) + selectedUser.name.charCodeAt(1)) % 7]}`">
-            <div class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
-              <img :src="`http://10.145.130.214:4000/api/files/${selectedUser.profileImage.split('/')[2]}`" v-if="selectedUser.profileImage" :alt="selectedUser.name"/>
+            <div
+                class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
+              <img :src="`${backendUrl}/api/files/${selectedUser.profileImage.split('/')[2]}`"
+                   v-if="selectedUser.profileImage" :alt="selectedUser.name"/>
             </div>
-            {{selectedUser.profileImage ? '' : selectedUser.name.slice(0, 2) }}
+            {{ selectedUser.profileImage ? '' : selectedUser.name.slice(0, 2) }}
           </div>
           <div class="text-blue-400 text-lg font-bold">
             {{ selectedUser.name }}
             <div class="text-gray-500 text-xs font-normal">
               {{ selectedUser.userID ? 'online' : 'Last Seen Recently' }}
             </div>
+          </div>
+          <div class="ml-auto">
+            <i class="pi pi-times hover:scale-125 transition-all duration-300"
+               @click="() => {showUserMenu = true ; selectedUser.name = undefined;selectedUser.id = undefined}"/>
           </div>
         </div>
         <div class="flex-1 grow overflow-y-auto mt-2 messagesContainer">
@@ -68,6 +78,10 @@
         </div>
       </div>
     </div>
+    <change-user-info-modal :show-edit-profile="showEditProfileImage" @close="showEditProfileImage = false" :name="name"
+                            :profile-image="profileImage"
+                            @user-edited="(n,pi) => {name = n;profileImage = pi;showEditProfileImage = false}"
+    />
   </div>
 </template>
 <script setup>
@@ -76,11 +90,16 @@ import router from "../router";
 import {nextTick, onMounted, onUnmounted, ref} from "vue";
 import axios from "axios";
 import Message from "../components/message.vue";
+import colors from "../helpers/staticData.js";
+import ChangeUserInfoModal from "../components/changeUserInfoModal.vue";
 
-const colors = ['orange-500', 'yellow-500', 'sky-500', 'indigo-500', 'purple-500', 'pink-500']
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 const showUserMenu = ref(true)
+const showEditProfileImage = ref(false)
 const username = ref("")
 const id = ref(0)
+const profileImage = ref('')
+const name = ref('')
 const isOffline = ref(false)
 const selectedUser = ref({name: undefined, userID: undefined, username: undefined})
 const text = ref("")
@@ -93,6 +112,8 @@ axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
   }
 }).then(res => {
   username.value = res.data.username;
+  name.value = res.data.name;
+  profileImage.value = res.data.profileImage;
   id.value = String(res.data.id);
   if (username.value === '') {
     localStorage.removeItem("token")
@@ -191,7 +212,7 @@ const sendMessage = () => {
 
 
 const changeUser = (user) => {
-  Object.assign(selectedUser.value , user)
+  Object.assign(selectedUser.value, user)
   user.haveNewMessage = false
   messages.value = user.messages
   nextTick(() => {

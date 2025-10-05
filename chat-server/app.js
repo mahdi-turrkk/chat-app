@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import fileServeRoute from "./routes/fileServeRoute.js";
+import userEditRoutes from "./routes/userEditRoutes.js";
 
 const app = express();
 
@@ -11,5 +12,6 @@ app.use(express.json());
 // routes
 app.use("/api", authRoutes);
 app.use("/api", fileServeRoute);
+app.use("/api", userEditRoutes);
 
 export default app;

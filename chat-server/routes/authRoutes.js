@@ -28,7 +28,7 @@ router.post("/login", (req, res) => {
             }
             else {
                 const token = jwt.sign(
-                    { username, id: rows[0].id },
+                    { username, id: rows[0].id, profileImage: rows[0].profileImage , name: rows[0].name },
                     SECRET_KEY,
                     { expiresIn: "24h" }
                 );
@@ -48,6 +48,8 @@ router.get("/me", (req, res) => {
             message: "Authorization successful",
             username: decoded.username,
             id: decoded.id,
+            name: decoded.name,
+            profileImage: decoded.profileImage,
         });
     } catch (err) {
         res.status(401).json({ message: "Invalid token" });
