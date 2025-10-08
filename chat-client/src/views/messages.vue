@@ -17,7 +17,7 @@
                :class="`bg-${colors[(user.name.charCodeAt(0) + user.name.charCodeAt(1)) % 7]}`">
             <div
                 class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
-              <img :src="`${backendUrl}/api/files/${user.profileImage.split('/')[2]}`"
+              <img :src="`${backendUrl}/api/files/${user.profileImage}?fileType=profile`"
                    v-if="user.profileImage" :alt="user.name"/>
             </div>
             {{ user.profileImage ? '' : user.name.slice(0, 2) }}
@@ -39,7 +39,7 @@
                :class="`bg-${colors[(selectedUser.name.charCodeAt(0) + selectedUser.name.charCodeAt(1)) % 7]}`">
             <div
                 class="rounded-full relative w-10 h-10 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
-              <img :src="`${backendUrl}/api/files/${selectedUser.profileImage.split('/')[2]}`"
+              <img :src="`${backendUrl}/api/files/${selectedUser.profileImage}?fileType=profile`"
                    v-if="selectedUser.profileImage" :alt="selectedUser.name"/>
             </div>
             {{ selectedUser.profileImage ? '' : selectedUser.name.slice(0, 2) }}
@@ -66,15 +66,28 @@
                    :is-sent="message.isSeen === 0 && message.fromUser === id"
                    :message-time="message.time"
                    :class="{'ml-auto' : message.fromUser === id}"
-                   :isMe="message.fromUser === id" :message="message.messageText"/>
+                   :isMe="message.fromUser === id" :message="message"/>
           <div id="last"></div>
         </div>
+        <div class="flex gap-2 mx-2 p-2 bg-white rounded-lg mb-1" v-if="files.length">
+          <div class="relative" v-for="(file,index) in files">
+            <img :src="getUrl(file)" class="w-20 h-20 object-cover rounded-lg"/>
+            <button class="-top-1 -right-1 absolute rounded-full bg-white shadow-lg w-4 h-4 cursor-pointer" @click="removeFile(index)" :disabled="isSending">
+              <i class="pi pi-times-circle text-red-500"/>
+            </button>
+          </div>
+        </div>
         <div class="flex bg-gray-400/40">
-          <input placeholder="Message" class="grow h-14 px-2 focus:outline-0" v-model="text"
+          <input placeholder="Message" class="grow h-14 px-2 focus:outline-0" v-model="text" :disabled="isSending"
                  @keyup.enter="sendMessage"/>
-          <button class="flex justify-center items-center px-4" :disabled="!text" @click="sendMessage">
-            <i class="pi pi-send  text-lg" :class="text ? 'text-blue-500' : 'text-gray-500'"/>
+          <button class="flex justify-center items-center px-2 cursor-pointer" @click="fileInput.click()" :disabled="isSending">
+            <i class="pi pi-paperclip text-lg text-blue-500"/>
           </button>
+          <button class="flex justify-center items-center px-2 mr-2 cursor-pointer " :disabled="!(text || files.length) || isSending" @click="sendMessage">
+            <i class="pi pi-send  text-lg" :class="text || files.length ? 'text-blue-500' : 'text-gray-500'" v-if="!isSending"/>
+            <span class="loader animate-spin" v-else/>
+          </button>
+          <input class="hidden" type="file" accept="image/png , image/jpeg, image'jpg" ref="fileInput" multiple @change="imageChanged">
         </div>
       </div>
     </div>
@@ -103,8 +116,11 @@ const name = ref('')
 const isOffline = ref(false)
 const selectedUser = ref({name: undefined, userID: undefined, username: undefined})
 const text = ref("")
+const fileInput = ref(null)
+const files = ref([])
 const messages = ref("")
 const users = ref([])
+const isSending = ref(false)
 
 axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
   headers: {
@@ -162,7 +178,6 @@ axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
 
     socket.on("private message", ({content, from}) => {
       const index = users.value.findIndex(object => object.id === String(from));
-      console.log(index)
       users.value[index].messages.push(content)
       users.value[index].haveNewMessage = true
       if (selectedUser.value.id === String(from)) {
@@ -190,10 +205,27 @@ axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
   router.replace("/")
 })
 
-const sendMessage = () => {
+const sendMessage = async () => {
+  isSending.value = true
+  let filePaths = []
+  if(files.value.length > 0) {
+    let reqBody = new FormData()
+    for(let i=0;i< files.value.length;i++){
+      console.log(i)
+      reqBody.append("files" , files.value[i], files.value[i].name)
+    }
+    await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,reqBody ,{
+      headers: {
+        Authorization: localStorage.getItem("token")
+      }
+    }).then(res => {
+      filePaths = res.data.filePaths
+    })
+  }
   socket.emit("private message", {
     content: text.value,
     to: selectedUser.value,
+    files: filePaths,
   });
   const index = users.value.findIndex(object => {
     return object.id === selectedUser.value.id;
@@ -204,9 +236,12 @@ const sendMessage = () => {
     messageText: text.value,
     fromUser: id.value,
     time: timeStamp,
-    isSeen: 0
+    isSeen: 0,
+    files: filePaths
   });
   text.value = undefined
+  files.value = []
+  isSending.value = false
   window.location.href = "#last"
 }
 
@@ -242,6 +277,19 @@ onUnmounted(() => {
   socket.off("private message");
   socket.off("seen message");
 })
+
+const imageChanged = (e) => {
+  files.value = Array.from(e.target.files)
+  files.value = files.value.slice(0,10)
+}
+
+const getUrl = (file) => {
+  return URL.createObjectURL(file)
+}
+
+const removeFile = (index) => {
+  files.value.spFlice(index,1)
+}
 
 </script>
 

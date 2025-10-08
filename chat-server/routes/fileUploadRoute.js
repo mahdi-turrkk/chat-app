@@ -1,18 +1,14 @@
 import express from "express";
-import db from "../config/db.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import jwt from "jsonwebtoken";
 
 const router = express.Router();
-const SALT_ROUNDS = 10;
-const SECRET_KEY = "thisIsATestChatApp";
 
 // Configure multer for file storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'uploads/profileImages/';
+        const uploadDir = 'uploads/MessageFiles/';
         // Create uploads directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -40,31 +36,21 @@ const fileFilter = (req, file, cb) => {
 // Initialize multer with configuration
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
     fileFilter: fileFilter
 });
 
 // Register route with multer middleware
-router.put("/users/editProfile", upload.single('profileImage'), async (req, res) => {
+router.post("/file/upload", upload.array("files", 10), async (req, res) => {
     const token = req.headers.authorization;
-    const decoded = jwt.verify(token, SECRET_KEY);
-    const userId = decoded.id
-    const {name} = req.body
+    if(!token)
+        res.status(401).json({message: 'token not found'})
 
     try {
         // Prepare user data
-        const profileImagePath = req.file ? req.file.filename : decoded.profileImage;
+        const filePaths = req.files.map(f => f.filename);
 
-        // update database
-        db.run("UPDATE users SET profileImage = ? , name = ? WHERE id = ?", [profileImagePath, name, userId], function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            const token = jwt.sign(
-                { username: decoded.username, id: userId, profileImage: profileImagePath , name },
-                SECRET_KEY,
-                { expiresIn: "24h" }
-            );
-            res.json({ message: "User updated successfully", profileImage: profileImagePath , name: name, token });
-        });
+        res.json({ message: "User updated successfully", filePaths });
 
     } catch (error) {
         console.error(error);

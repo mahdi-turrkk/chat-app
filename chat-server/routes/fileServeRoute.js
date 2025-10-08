@@ -10,7 +10,8 @@ const __dirname = path.dirname(__filename);
 // Endpoint to serve profile images
 router.get('/files/:filePath', (req, res) => {
     const { filePath } = req.params;
-    const file = path.join(__dirname, '..', 'uploads', 'profileImages', filePath);
+    const { fileType } = req.query
+    const file = path.join(__dirname, '..', 'uploads', fileType=='profile' ? 'profileImages': 'MessageFiles', filePath);
 
     // Check if file exists
     if (!fs.existsSync(file)) {

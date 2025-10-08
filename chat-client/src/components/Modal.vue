@@ -51,13 +51,13 @@ watch(() => props.show, (newVal) => {
       @click="backdropClicked" ref="backdrop" v-if="show">
     <transition :name="displayHelper(windowWidth).mdAndUp ? 'scaleFromLittle' : 'enterFromBottom'">
       <div v-if="showModal"
-          class="no-scrollbar bg-white px-6 w-full md:w-fit md:max-w-[500px] rounded-t md:rounded-b flex flex-col py-4 bottom-0 max-h-[65dvh] md:max-h-[80dvh] fixed md:sticky md:top-0">
+          class="text-black no-scrollbar bg-white px-6 w-full md:w-fit md:max-w-[500px] rounded-t md:rounded-b flex flex-col py-4 bottom-0 max-h-[65dvh] md:max-h-[80dvh] fixed md:sticky md:top-0">
         <div class="flex justify-between w-full items-center">
-          <div class="text-center font-bold text-text-1">{{ title }}</div>
+          <div class="text-center font-bold">{{ title }}</div>
           <div
               @click="close"
               v-if="displayHelper(windowWidth).mdAndUp"
-              class="bg-white text-text-1 py-3 px-3 rounded-xl flex justify-center items-center hover:scale-110 transition-all duration-300 cursor-pointer">
+              class="bg-white py-3 px-3 rounded-xl flex justify-center items-center hover:scale-110 transition-all duration-300 cursor-pointer">
             <i class="pi pi-times"/>
           </div>
         </div>

@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
 import {
     getAllUsers,
-    getMessages,
     saveMessage,
     getUser,
     seenMessage,
+    saveFileMessageMap,
+    getMessageWithFiles
 } from "../helpers/queries.js";
 import db from "../config/db.js";
 
@@ -31,7 +32,7 @@ export function initSocket(io) {
             users = result
             const userIds = []
             let allMessages = []
-            getMessages(db, socket.userId).then((messages) => {
+            getMessageWithFiles(db, socket.userId).then((messages) => {
                 allMessages = messages
                 for (let i = 0; i < users.length; i++) {
                     users[i].messages = allMessages.filter(message => (message.toUser == users[i].id || message.fromUser == users[i].id))
@@ -57,15 +58,34 @@ export function initSocket(io) {
         });
 
         // forward the private message to the right recipient
-        socket.on("private message", ({content, to}) => {
-            saveMessage(db, content, socket.userId, to.id).then((result) => {
-                if (to.userID != undefined) {
-                    socket.to(to.userID).emit("private message", {
-                        content: result,
-                        from: socket.userId,
-                    });
+        socket.on("private message", ({content, to, files}) => {
+            saveMessage(db, content, socket.userId, to.id).then(async (result) => {
+                if(files?.length){
+                    result.files = []
+                    for(let i=0;i < files.length;i++){
+                        await saveFileMessageMap(db, files[i], result.id).then((fileResult) => {
+                            result.files.push(fileResult.path)
+                        })
+                    }
+                    if (to.userID != undefined) {
+                        socket.to(to.userID).emit("private message", {
+                            content: result,
+                            from: socket.userId,
+                        });
+                    }
+                }
+                else {
+                    if (to.userID != undefined){
+                        result.files = []
+                        socket.to(to.userID).emit("private message", {
+                            content: result,
+                            from: socket.userId,
+                        });
+                    }
                 }
             })
+
+
         });
 
         socket.on("seen message", ({fromUser, toUser, fromUserID}) => {

@@ -114,7 +114,7 @@ router.post("/register", upload.single('profileImage'), async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
             // Prepare user data
-            const profileImagePath = req.file ? req.file.path : null;
+            const profileImagePath = req.file ? req.file.filename : null;
 
             // Insert user into database
             db.run(

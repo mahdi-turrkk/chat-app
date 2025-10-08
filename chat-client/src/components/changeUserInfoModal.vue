@@ -7,7 +7,7 @@
                :class="`bg-${colors[(name.charCodeAt(0) + name.charCodeAt(1)) % 7]}`">
             <div class="rounded-full relative w-32 h-32 text-white flex justify-center items-center font-bold text-lg overflow-hidden">
               <img :src="selectedProfileImageUrl" v-if="selectedProfileImageUrl" :alt="name"/>
-              <img :src="`${backendUrl}/api/files/${profileImage.split('/')[2]}`" v-else-if="profileImage" :alt="name"/>
+              <img :src="`${backendUrl}/api/files/${profileImage}?fileType=profile`" v-else-if="profileImage" :alt="name"/>
             </div>
             {{profileImage ? '' : name.slice(0, 2) }}
           </div>
