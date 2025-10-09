@@ -87,7 +87,7 @@
             <i class="pi pi-send  text-lg" :class="text || files.length ? 'text-blue-500' : 'text-gray-500'" v-if="!isSending"/>
             <span class="loader animate-spin" v-else/>
           </button>
-          <input class="hidden" type="file" accept="image/png , image/jpeg, image'jpg" ref="fileInput" multiple @change="imageChanged">
+          <input class="hidden" type="file" ref="fileInput" multiple @change="imageChanged">
         </div>
       </div>
     </div>
@@ -222,6 +222,7 @@ const sendMessage = async () => {
       filePaths = res.data.filePaths
     })
   }
+  console.log(filePaths)
   socket.emit("private message", {
     content: text.value,
     to: selectedUser.value,

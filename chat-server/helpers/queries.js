@@ -44,7 +44,7 @@ function saveMessage(db, content, fromUser, toUser) {
     return new Promise((resolve, reject) => {
         const date = new Date()
         const timeStamp = `${date.getFullYear()}/${date.getMonth() > 9 ? date.getMonth() : "0" + date.getMonth()}/${date.getDate() > 9 ? date.getDate() : "0" + date.getDate()}-${date.getHours() > 9 ? date.getHours() : "0" + date.getHours()}:${date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes()}`
-        db.run(`INSERT INTO messages (messageText, fromUser, toUser, time, isSeen) VALUES (?, ?, ?, ?, ?)`, [content, fromUser, toUser, timeStamp, 0], function(err) {
+        db.run(`INSERT INTO messages (messageText, fromUser, toUser, time, isSeen) VALUES (?, ?, ?, ?, ?)`, [content?? '', fromUser, toUser, timeStamp, 0], function(err) {
             if (err) {
                 reject(err);
             } else {
@@ -75,16 +75,17 @@ function seenMessage(db, fromUser, toUser) {
     })
 }
 
-function saveFileMessageMap(db, filePath, messageId) {
+function saveFileMessageMap(db, file, messageId) {
     return new Promise((resolve, reject) => {
-        db.run(`INSERT INTO file_message_map (filePath, messageId) VALUES (?, ?)`, [filePath, messageId], function(err) {
+        db.run(`INSERT INTO file_message_map (filePath, fileType, messageId) VALUES (?, ?, ?)`, [file.fileName , file.fileType, messageId], function(err) {
             if (err) {
                 reject(err);
             } else {
                 // return rows;
                 resolve({
                     id: this.lastID,
-                    path : filePath,
+                    path : file.fileName,
+                    type : file.fileType,
                 })
             }
         })
@@ -96,7 +97,7 @@ function getMessageWithFiles(db, user1){
         db.all(
             `SELECT
                  m.id, m.messageText, m.fromUser, m.toUser, m.time, m.isSeen,
-                 GROUP_CONCAT(f.filePath) AS files
+                 GROUP_CONCAT(f.filePath || '::' || f.fileType, '||') AS files
              FROM messages m
                       LEFT JOIN file_message_map f ON m.id = f.messageId
              WHERE m.fromUser = ? OR m.toUser = ?
@@ -105,11 +106,28 @@ function getMessageWithFiles(db, user1){
             (err, rows) => {
                 if (err) return resolve([]);
 
-                // Convert CSV file list → array
-                const result = rows.map(r => ({
-                    ...r,
-                    files: r.files ? r.files.split(",") : [],
-                }));
+                const typeOrder = {
+                    image: 1,
+                    video: 2,
+                    voice: 3,
+                };
+
+                const result = rows.map(r => {
+                    const files = r.files
+                        ? r.files.split('||').map(fileStr => {
+                            const [filePath, fileType] = fileStr.split('::');
+                            return { fileName: filePath, fileType };
+                        })
+                            // custom order: compare main MIME type (before '/')
+                            .sort((a, b) => {
+                                const aMain = a.fileType.split('/')[0];
+                                const bMain = b.fileType.split('/')[0];
+                                return (typeOrder[aMain] || 99) - (typeOrder[bMain] || 99);
+                            })
+                        : [];
+
+                    return { ...r, files };
+                });
 
                 resolve(result);
             }

@@ -24,13 +24,14 @@ const storage = multer.diskStorage({
 
 // File filter to accept only images
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
-        return cb(null, true);
-    }
-    cb(new Error('Only images (jpeg, jpg, png, gif) are allowed'));
+    // const allowedTypes = /jpeg|jpg|png/;
+    // const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    // const mimetype = allowedTypes.test(file.mimetype);
+    // if (extname && mimetype) {
+    //     return cb(null, true);
+    // }
+    return cb(null, true);
+    // cb(new Error('Only images (jpeg, jpg, png, gif) are allowed'));
 };
 
 // Initialize multer with configuration
@@ -48,7 +49,7 @@ router.post("/file/upload", upload.array("files", 10), async (req, res) => {
 
     try {
         // Prepare user data
-        const filePaths = req.files.map(f => f.filename);
+        const filePaths = req.files.map(f => {return {fileName: f.filename, fileType: f.mimetype.split('/')[0]}});
 
         res.json({ message: "User updated successfully", filePaths });
 
